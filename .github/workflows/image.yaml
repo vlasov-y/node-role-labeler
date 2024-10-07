@@ -36,7 +36,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     concurrency:
-      group: ${{ github.workflow }}-${{ github.sha }}-build
+      group: ${{ github.workflow }}-${{ github.sha }}-${{ matrix.platform }}-build
       cancel-in-progress: false
     strategy:
       fail-fast: false
