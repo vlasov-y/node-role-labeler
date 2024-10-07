@@ -61,7 +61,7 @@ spec:
         - /manager
         args:
         - --leader-elect
-        image: controller:latest
+        image: ghcr.io/vlasov-y/node-role-labeler:latest
         name: manager
         securityContext:
           allowPrivilegeEscalation: false
