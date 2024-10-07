@@ -4,7 +4,7 @@ Operator that monitors nodes labels and sync custom role labels with official Ku
 
 ## Description
 
-Kubernetes does not allow to assign `node-role.kubernetes.io/*` labels from kubelet, so Node could mark itself. Using these operator you can create `node-role.cluster.local/*` instead and operator will create respective `node-role.kubernetes.io/*` label and wise-versa. You can change this custom prefix using env variable `NODE_ROLE_PREFIX`, which is set to `node-role.cluster.local/` by default.
+Kubernetes does not allow to assign `node-role.kubernetes.io/*` labels from kubelet, so Node cannot mark itself. Using these operator you can create `node-role.cluster.local/*` instead and operator will create respective `node-role.kubernetes.io/*` label and vice-versa. You can change this custom prefix using env variable `NODE_ROLE_PREFIX`, which is set to `node-role.cluster.local/` by default.
 
 ## Getting Started
 
