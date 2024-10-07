@@ -11,7 +11,7 @@ Kubernetes does not allow to assign `node-role.kubernetes.io/*` labels from kube
 Install using kustomize.
 
 ```shell
-kubectl apply -k https://raw.githubusercontent.com/vlasov-y/node-role-labeler/refs/heads/main/src/config/default
+kubectl apply -k https://github.com/vlasov-y/node-role-labeler/releases/latest/download/install.yaml
 ```
 
 ## License
