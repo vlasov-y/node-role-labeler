@@ -29,7 +29,7 @@ jobs:
           TEMPLATE: |-
             .images += {
               "name": "ghcr.io/${{ github.repository }}",
-              "newTag": "${{ github.ref }}"
+              "newTag": "${{ github.ref_name }}"
             }
         with:
           cmd: yq -i "${TEMPLATE}" src/config/manager/kustomization.yaml
