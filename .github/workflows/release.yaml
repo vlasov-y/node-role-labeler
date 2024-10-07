@@ -23,13 +23,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Remove 'v' from tag
+        id: version
+        run: echo "${{ github.ref_name }}" | sed -r 's/^v//' |
+          xargs printf "version=%s" | tee -a "$GITHUB_OUTPUT"
+
       - name: Update image tag
         uses: mikefarah/yq@v4
         env:
           TEMPLATE: |-
             .images += {
               "name": "ghcr.io/${{ github.repository }}",
-              "newTag": "${{ github.ref_name }}"
+              "newTag": "${{ steps.version.outputs.version }}"
             }
         with:
           cmd: yq -i "${TEMPLATE}" src/config/manager/kustomization.yaml
