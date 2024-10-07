@@ -26,7 +26,7 @@ jobs:
               "newTag": "${{ github.ref }}"
             }
         with:
-          cmd: printenv TEMPLATE | xargs -I{} yq -i {} src/config/manager/kustomization.yaml
+          cmd: yq -i "${TEMPLATE}" src/config/manager/kustomization.yaml
 
       - name: Kustomize Build
         uses: karancode/kustomize-github-action@v1.3.2
