@@ -1,0 +1,23 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build before Debug",
+			"type": "shell",
+			"command": "cd src && make manifests generate fmt vet",
+			"options": {
+				"env": {
+					"KUBECONFIG": "${workspaceFolder}/src/kubeconfig.yaml"
+				}
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"reveal": "silent"
+			},
+			"problemMatcher": []
+		}
+	]
+}
