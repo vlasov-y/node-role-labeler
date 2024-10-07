@@ -17,8 +17,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Update image tag
+        uses: mikefarah/yq@v4
+        env:
+          TEMPLATE: |-
+            .images += {
+              "name": "ghcr.io/${{ github.repository }}",
+              "newTag": "${{ github.ref }}"
+            }
+        with:
+          cmd: printenv TEMPLATE | xargs -I{} yq -i {} src/config/manager/kustomization.yaml
+
       - name: Kustomize Build
-        uses: karancode/kustomize-github-action@1.3.2
+        uses: karancode/kustomize-github-action@v1
         with:
           kustomize_version: 5.4.2
           kustomize_build_dir: src/config/default
