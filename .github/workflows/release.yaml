@@ -29,7 +29,7 @@ jobs:
           cmd: printenv TEMPLATE | xargs -I{} yq -i {} src/config/manager/kustomization.yaml
 
       - name: Kustomize Build
-        uses: karancode/kustomize-github-action@v1
+        uses: karancode/kustomize-github-action@v1.3.2
         with:
           kustomize_version: 5.4.2
           kustomize_build_dir: src/config/default
