@@ -32,13 +32,7 @@ jobs:
           cmd: yq -i "${TEMPLATE}" src/config/manager/kustomization.yaml
 
       - name: Kustomize Build
-        uses: karancode/kustomize-github-action@v1.3.2
-        with:
-          kustomize_version: 5.4.2
-          kustomize_build_dir: src/config/default
-          kustomize_comment: true
-          kustomize_output_file: install.yaml
-          enable_alpha_plugins: true
+        run: kustomize build src/config/default | tee install.yaml
 
       - name: Release
         uses: softprops/action-gh-release@v2
