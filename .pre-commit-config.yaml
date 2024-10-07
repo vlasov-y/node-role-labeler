@@ -14,3 +14,12 @@ repos:
   hooks:
     - id: check-merge-conflict
     - id: end-of-file-fixer
+- repo: local
+  hooks:
+    - id: regenerate-manifests
+      name: Regenerate manifests
+      entry: make -C src manifests generate fmt vet
+      language: system
+      files: src/.+
+      types: [file]
+      pass_filenames: false

@@ -45,6 +45,7 @@ type NodeReconciler struct {
 
 //+kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch;update;patch
 //+kubebuilder:rbac:groups="",resources=nodes/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups="",resources=events,verbs=create;get;list;patch;update;watch
 
 func (r *NodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
 	log := log.FromContext(ctx)
