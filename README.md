@@ -16,6 +16,8 @@ kubectl apply -f https://github.com/vlasov-y/node-role-labeler/releases/latest/d
 
 ## Demo
 
+[![asciicast](https://asciinema.org/a/679600.svg)](https://asciinema.org/a/679600)
+
 ## License
 
 [Apache License, Version 2.0](LICENSE)
