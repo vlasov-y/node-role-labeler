@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/vlasov-y/node-role-labeler/internal/controller/utils"
@@ -33,6 +34,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+)
+
+const (
+	annotationState  = "node-role-labeler.io/state"
+	annotationEnable = "node-role-labeler.io/enable"
 )
 
 // NodeReconciler reconciles a Node object
@@ -85,10 +91,25 @@ func (r *NodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (resul
 		annotations = map[string]string{}
 	}
 
+	// Handle enable annotation
+	if a, exists := annotations[annotationEnable]; exists {
+		var b bool
+		if b, err = strconv.ParseBool(a); err != nil {
+			msg := fmt.Sprintf("failed to convert %s's value to bool", annotationEnable)
+			log.V(1).Error(fmt.Errorf(msg), msg)
+			r.Recorder.Eventf(&node, corev1.EventTypeWarning, "BadAnnotation", msg)
+			return
+		}
+		if !b {
+			msg := fmt.Sprintf("skipping the node because of %s=false annotation", annotationEnable)
+			log.V(1).Info(msg)
+			return
+		}
+	}
+
 	// Initialize state roles map from the annotation
-	stateAnnotation := "node-role-labeler.io/state"
 	stateRoles := map[string]string{}
-	if a, exists := annotations[stateAnnotation]; exists && a != "" {
+	if a, exists := annotations[annotationState]; exists && a != "" {
 		if err = json.Unmarshal([]byte(a), &stateRoles); err != nil {
 			// Error: Cannot unmarshal the state annotation
 			msg := "cannot unmarshal node's labels state annotation"
@@ -112,7 +133,7 @@ func (r *NodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (resul
 		// Log and record event for initialization
 		msg := "initialized the state"
 		log.V(1).Info(msg)
-		r.Recorder.Eventf(&node, corev1.EventTypeNormal, "Initialization", "created %s annotation", stateAnnotation)
+		r.Recorder.Eventf(&node, corev1.EventTypeNormal, "Initialization", "created %s annotation", annotationState)
 	}
 
 	// Iterate over labels to manage custom and official role labels
@@ -182,7 +203,7 @@ func (r *NodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (resul
 		r.Recorder.Eventf(&node, corev1.EventTypeWarning, "StateMarshalFailed", "%s", err.Error())
 		return
 	}
-	annotations[stateAnnotation] = string(stateMarshaled)
+	annotations[annotationState] = string(stateMarshaled)
 	node.SetLabels(labels)
 	node.SetAnnotations(annotations)
 

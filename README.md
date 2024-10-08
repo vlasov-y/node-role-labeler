@@ -58,6 +58,15 @@ patches:
       name: node-role-labeler.+
 ```
 
+## Annotations
+
+These annotation are set on nodes.
+
+| Name                          | Default | Description                                                       |
+| ----------------------------- | ------- | ----------------------------------------------------------------- |
+| `node-role-labeler.io/state`  | *JSON*  | Controlled by operator, do not change                             |
+| `node-role-labeler.io/enable` | *true*  | Set to "false" in order to disable operator for a particular node |
+
 ## Demo
 
 [![asciicast](https://asciinema.org/a/679600.svg)](https://asciinema.org/a/679600)
