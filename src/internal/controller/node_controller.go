@@ -208,6 +208,12 @@ func (r *NodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (resul
 	node.SetAnnotations(annotations)
 
 	if err = r.Client.Update(ctx, &node); err != nil {
+		if strings.Contains(err.Error(), "please apply your changes to the latest version and try again") {
+			err = nil
+			result.Requeue = true
+			log.V(1).Info("requeue because of update conflict")
+			return
+		}
 		msg := "failed to update the node"
 		log.Error(err, msg)
 		r.Recorder.Eventf(&node, corev1.EventTypeWarning, "NodeUpdateFailed", "%s", err.Error())
