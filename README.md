@@ -56,6 +56,17 @@ patches:
     target:
       kind: Deployment
       name: node-role-labeler.+
+## Uncomment if you want to disable creation of custom namespace and plan to use system one instead
+#  - patch: |-
+#      $patch: delete
+#      apiVersion: v1
+#      kind: Namespace
+#      metadata:
+#        name: _
+#    target:
+#      kind: Namespace
+#namespace: kube-system
+
 ```
 
 ## Annotations
