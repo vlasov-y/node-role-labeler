@@ -15,9 +15,10 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version-file: src/go.mod
 
       - name: Run linter
         uses: golangci/golangci-lint-action@v8
         with:
           version: latest
+          working-directory: src

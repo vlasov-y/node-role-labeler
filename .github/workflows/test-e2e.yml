@@ -15,7 +15,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version-file: src/go.mod
 
       - name: Install the latest version of kind
         uses: engineerd/setup-kind@v0.6.0
@@ -27,6 +27,8 @@ jobs:
 
       - name: Go mod tidy
         run: go mod tidy
+        working-directory: src
 
       - name: Running Test e2e
         run: make test-e2e
+        working-directory: src

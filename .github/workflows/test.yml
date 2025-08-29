@@ -15,10 +15,12 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version-file: src/go.mod
 
       - name: Go mod tidy
         run: go mod tidy
+        working-directory: src
 
       - name: Running Test
         run: make test
+        working-directory: src
