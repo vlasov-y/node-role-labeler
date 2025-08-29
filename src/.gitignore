@@ -25,5 +25,3 @@ go.work
 *.swp
 *.swo
 *~
-kubeconfig.yaml
-main

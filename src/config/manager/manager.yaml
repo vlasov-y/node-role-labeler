@@ -1,93 +1,81 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  labels:
-    control-plane: controller-manager
-    app.kubernetes.io/name: node-role-labeler
-    app.kubernetes.io/managed-by: kustomize
-  name: system
+  name: _
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: controller-manager
-  labels:
-    control-plane: controller-manager
-    app.kubernetes.io/name: node-role-labeler
-    app.kubernetes.io/managed-by: kustomize
+  name: manager
 spec:
-  selector:
-    matchLabels:
-      control-plane: controller-manager
   replicas: 1
   template:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: manager
-      labels:
-        control-plane: controller-manager
     spec:
-      # TODO(user): Uncomment the following code to configure the nodeAffinity expression
-      # according to the platforms which are supported by your solution.
-      # It is considered best practice to support multiple architectures. You can
-      # build your manager image using the makefile target docker-buildx.
-      # affinity:
-      #   nodeAffinity:
-      #     requiredDuringSchedulingIgnoredDuringExecution:
-      #       nodeSelectorTerms:
-      #         - matchExpressions:
-      #           - key: kubernetes.io/arch
-      #             operator: In
-      #             values:
-      #               - amd64
-      #               - arm64
-      #               - ppc64le
-      #               - s390x
-      #           - key: kubernetes.io/os
-      #             operator: In
-      #             values:
-      #               - linux
-      securityContext:
-        runAsNonRoot: true
-        # TODO(user): For common cases that do not require escalating privileges
-        # it is recommended to ensure that all your Pods/Containers are restrictive.
-        # More info: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
-        # Please uncomment the following code if your project does NOT have to work on old Kubernetes
-        # versions < 1.19 or on vendors versions which do NOT support this field by default (i.e. Openshift < 4.11 ).
-        # seccompProfile:
-        #   type: RuntimeDefault
-      containers:
-      - command:
-        - /manager
-        args:
-        - --leader-elect
-        image: ghcr.io/vlasov-y/node-role-labeler:latest
-        name: manager
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - "ALL"
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8081
-          initialDelaySeconds: 15
-          periodSeconds: 20
-        readinessProbe:
-          httpGet:
-            path: /readyz
-            port: 8081
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        # TODO(user): Configure the resources accordingly based on the project requirements.
-        # More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-        resources:
-          limits:
-            cpu: 50m
-            memory: 50Mi
-          requests:
-            cpu: 10m
-            memory: 30Mi
-      serviceAccountName: controller-manager
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
+                      - arm64
+                  - key: kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+      enableServiceLinks: false
+      automountServiceAccountToken: true
+      serviceAccountName: manager
       terminationGracePeriodSeconds: 10
+      securityContext:
+        # Projects are configured by default to adhere to the "restricted" Pod Security Standards.
+        # This ensures that deployments meet the highest security requirements for Kubernetes.
+        # For more details, see: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: manager
+          command:
+            - /manager
+          args:
+            - --leader-elect
+            - --metrics-bind-address=:8080
+            - --health-probe-bind-address=:8081
+          image: controller
+          ports:
+            - name: metrics
+              containerPort: 8080
+            - name: healthz
+              containerPort: 8081
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - "ALL"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: healthz
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            limits:
+              cpu: 50m
+              memory: 50Mi
+            requests:
+              cpu: 10m
+              memory: 30Mi
+          volumeMounts: []
+      volumes: []

@@ -1,0 +1,4 @@
+commonLabels:
+  - kind: ServiceMonitor
+    path: /spec/selector/matchLabels
+    create: true

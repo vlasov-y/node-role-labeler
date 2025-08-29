@@ -1,6 +1,5 @@
-#checkov:skip=CKV_DOCKER_2: HEALTHCHECK is ignored by Kubernetes
 # Build the manager binary
-FROM golang:1.23.2@sha256:9dd2625a1ff2859b8d8b01d8f7822c0f528942fe56cfe7a1e7c38d3b8d72d679 AS builder
+FROM golang:1.24 AS builder
 ARG TARGETOS
 ARG TARGETARCH
 
@@ -25,7 +24,7 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o ma
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot@sha256:26f9b99f2463f55f20db19feb4d96eb88b056e0f1be7016bb9296a464a89d772
+FROM gcr.io/distroless/static:nonroot
 WORKDIR /
 COPY --from=builder /workspace/manager .
 USER 65532:65532

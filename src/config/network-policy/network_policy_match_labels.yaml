@@ -1,0 +1,4 @@
+commonLabels:
+  - kind: NetworkPolicy
+    path: /spec/podSelector/matchLabels
+    create: true

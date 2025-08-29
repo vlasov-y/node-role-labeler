@@ -1,5 +1,5 @@
 #  ┬─┐┬─┐┬  ┬─┐┬─┐┐─┐┬─┐
-#  │┬┘├─ │  ├─ │─┤└─┐├─ 
+#  │┬┘├─ │  ├─ │─┤└─┐├─
 #  ┘└┘┴─┘┘─┘┴─┘┘ ┘──┘┴─┘
 
 name: Release
@@ -29,15 +29,8 @@ jobs:
           xargs printf "version=%s" | tee -a "$GITHUB_OUTPUT"
 
       - name: Update image tag
-        uses: mikefarah/yq@v4
-        env:
-          TEMPLATE: |-
-            .images += {
-              "name": "ghcr.io/${{ github.repository }}",
-              "newTag": "${{ steps.version.outputs.version }}"
-            }
-        with:
-          cmd: yq -i "${TEMPLATE}" src/config/manager/kustomization.yaml
+        run: kustomize edit set image "controller=ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}"
+        working-directory: src/config/manager
 
       - name: Kustomize Build
         run: kustomize build src/config/default | tee install.yaml

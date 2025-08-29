@@ -1,5 +1,5 @@
 /*
-Copyright 2024.
+Copyright 2025.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -75,9 +75,9 @@ func (r *NodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (resul
 	}
 	if customRolePrefix == officialRolePrefix {
 		// Error: Custom role prefix matches the official one
-		msg := "custom node role prefix cannot match official node-role.kubernetes.io"
-		log.V(1).Error(fmt.Errorf(msg), msg)
-		r.Recorder.Eventf(&node, corev1.EventTypeWarning, "OperatorMisconfigured", "check operator logs")
+		err = fmt.Errorf("you cannot use %s as a role prefix since it is used by Kubernetes", officialRolePrefix)
+		log.V(1).Error(err, "reserved role prefix used")
+		r.Recorder.Eventf(&node, corev1.EventTypeWarning, "OperatorMisconfigured", err.Error())
 		return
 	}
 
@@ -95,9 +95,9 @@ func (r *NodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (resul
 	if a, exists := annotations[annotationEnable]; exists {
 		var b bool
 		if b, err = strconv.ParseBool(a); err != nil {
-			msg := fmt.Sprintf("failed to convert %s's value to bool", annotationEnable)
-			log.V(1).Error(fmt.Errorf(msg), msg)
-			r.Recorder.Eventf(&node, corev1.EventTypeWarning, "BadAnnotation", msg)
+			err = fmt.Errorf("failed to convert %s's value to bool", annotationEnable)
+			log.V(1).Error(err, "bad annotation")
+			r.Recorder.Eventf(&node, corev1.EventTypeWarning, "BadAnnotation", err.Error())
 			return
 		}
 		if !b {
@@ -238,5 +238,6 @@ func (r *NodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		WithOptions(controller.Options{MaxConcurrentReconciles: 10}).
 		WithEventFilter(utils.IgnoreOutOfOrder()).
 		WithEventFilter(utils.IgnoreDeletionPredicate()).
+		Named("node").
 		Complete(r)
 }
