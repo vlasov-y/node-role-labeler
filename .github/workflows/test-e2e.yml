@@ -19,9 +19,10 @@ jobs:
           cache-dependency-path: src/go.sum
 
       - name: Install the latest version of kind
-        uses: engineerd/setup-kind@v0.6.0
-        with:
-          skipClusterCreation: "true"
+        run: |
+          curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
+          chmod 0755 ./kind
+          sudo mv ./kind /usr/local/bin/kind
 
       - name: Verify kind installation
         run: kind version
