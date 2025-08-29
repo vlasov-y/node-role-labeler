@@ -16,6 +16,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: src/go.mod
+          cache-dependency-path: src/go.sum
 
       - name: Install the latest version of kind
         uses: engineerd/setup-kind@v0.6.0
