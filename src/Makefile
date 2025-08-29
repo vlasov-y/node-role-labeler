@@ -115,7 +115,7 @@ test: manifests generate fmt vet setup-envtest ## Run tests.
 # To use a different vendor for e2e tests, modify the setup under 'tests/e2e'.
 # The default setup assumes Kind is pre-installed and builds/loads the Manager Docker image locally.
 # CertManager is installed by default; skip with:
-# - CERT_MANAGER_INSTALL_SKIP=true
+CERT_MANAGER_INSTALL_SKIP=true
 KIND_CLUSTER ?= node-role-labeler-test-e2e
 
 .PHONY: setup-test-e2e
@@ -216,11 +216,11 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/default | $(KUBECTL) apply -f -
+	$(KUBECTL) apply -k config/default
 
 .PHONY: undeploy
 undeploy: kustomize ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
-	$(KUSTOMIZE) build config/default | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -
+	$(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -k config/default
 
 ##@ Dependencies
 

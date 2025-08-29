@@ -51,7 +51,7 @@ var _ = Describe("NodeReconciler", func() {
 	})
 
 	AfterEach(func() {
-		os.Unsetenv("NODE_ROLE_PREFIX")
+		Expect(os.Unsetenv("NODE_ROLE_PREFIX")).To(Succeed())
 	})
 
 	Context("when duplicating role labels", func() {
@@ -126,7 +126,7 @@ var _ = Describe("NodeReconciler", func() {
 
 	Context("when using custom prefix from env", func() {
 		BeforeEach(func() {
-			os.Setenv("NODE_ROLE_PREFIX", "node-role.example.com/")
+			Expect(os.Setenv("NODE_ROLE_PREFIX", "node-role.example.com/")).To(Succeed())
 		})
 
 		It("should use custom prefix", func() {
@@ -153,7 +153,7 @@ var _ = Describe("NodeReconciler", func() {
 
 	Context("when reserved prefix is used", func() {
 		BeforeEach(func() {
-			os.Setenv("NODE_ROLE_PREFIX", "node-role.kubernetes.io/")
+			Expect(os.Setenv("NODE_ROLE_PREFIX", "node-role.kubernetes.io/")).To(Succeed())
 		})
 
 		It("should return error", func() {

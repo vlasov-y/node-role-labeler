@@ -41,7 +41,7 @@ const serviceAccountName = "node-role-labeler-manager"
 const metricsServiceName = "node-role-labeler-manager"
 
 // metricsRoleBindingName is the name of the RBAC that will be created to allow get the metrics data
-const metricsRoleBindingName = "node-role-labeler-metrics"
+const metricsRoleBindingName = "node-role-labeler-metrics-get"
 
 var _ = Describe("Manager", Ordered, func() {
 	var controllerPodName string
@@ -172,8 +172,8 @@ var _ = Describe("Manager", Ordered, func() {
 		})
 
 		It("should ensure the metrics endpoint is serving metrics", func() {
-			By("creating a ClusterRoleBinding for the service account to allow access to metrics")
-			cmd := exec.Command("kubectl", "get", "clusterrolebinding", metricsRoleBindingName, "-n", namespace)
+			By("getting a ClusterRoleBinding for the service account to allow fetching metrics")
+			cmd := exec.Command("kubectl", "get", "clusterrolebinding", metricsRoleBindingName)
 			_, err := utils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred(), "Failed to get metrics-read ClusterRoleBinding")
 

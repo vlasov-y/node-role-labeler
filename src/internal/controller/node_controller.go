@@ -23,6 +23,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/vlasov-y/node-role-labeler/internal/controller/utils"
 	corev1 "k8s.io/api/core/v1"
@@ -33,7 +34,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
@@ -49,12 +50,12 @@ type NodeReconciler struct {
 	Recorder record.EventRecorder
 }
 
-//+kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch;update;patch
-//+kubebuilder:rbac:groups="",resources=nodes/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups="",resources=events,verbs=create;get;list;patch;update;watch
+// +kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups="",resources=nodes/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;get;list;patch;update;watch
 
 func (r *NodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
-	log := log.FromContext(ctx)
+	log := logf.FromContext(ctx)
 	node := corev1.Node{}
 	if err = r.Get(ctx, req.NamespacedName, &node); err != nil {
 		// Object does not exist, ignore the event and return
@@ -207,10 +208,10 @@ func (r *NodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (resul
 	node.SetLabels(labels)
 	node.SetAnnotations(annotations)
 
-	if err = r.Client.Update(ctx, &node); err != nil {
+	if err = r.Update(ctx, &node); err != nil {
 		if strings.Contains(err.Error(), "please apply your changes to the latest version and try again") {
 			err = nil
-			result.Requeue = true
+			result.RequeueAfter = time.Second
 			log.V(1).Info("requeue because of update conflict")
 			return
 		}
