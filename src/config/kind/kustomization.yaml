@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../manager
+patches:
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: test
+        path: /spec/template/spec/containers/0/args/2
+        value: --zap-devel=false
+      - op: replace
+        path: /spec/template/spec/containers/0/args/2
+        value: --zap-devel=true
+      - op: test
+        path: /spec/template/spec/containers/0/args/3
+        value: --zap-log-level=info
+      - op: replace
+        path: /spec/template/spec/containers/0/args/3
+        value: --zap-log-level=3

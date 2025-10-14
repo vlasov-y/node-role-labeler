@@ -1,0 +1,74 @@
+version: "3"
+
+set: [pipefail]
+
+vars:
+  versions:
+    map:
+      controllerGen: v0.19.0
+      kind: v0.30.0
+      kustomize: v5.7.1
+      lint: v2.4.0
+      setupEnvtest: v0.0.0-20251006160259-7fb34b509fcf
+      envtest: 1.34.1
+
+tasks:
+  all:
+    desc: Installs CLI tools to {{ .localBin }}
+    deps: [controller-gen, kustomize, lint, setup-envtest, kind]
+
+  kind:
+    desc: Installs kind to {{ .bin.kind }}
+    cmds:
+      - mkdir -p {{ squote .localBin }}
+      - "GOBIN={{ squote .localBin }} go install sigs.k8s.io/kind@{{ .versions.kind }}"
+    status:
+      - "{{ .bin.kind }} version"
+
+  controller-gen:
+    desc: Installs controller-gen to {{ .bin.controllerGen }}
+    cmds:
+      - mkdir -p {{ squote .localBin }}
+      - GOBIN={{ squote .localBin }} go install sigs.k8s.io/controller-tools/cmd/controller-gen@{{ .versions.controllerGen }}
+    status:
+      - "{{ .bin.controllerGen }} --version"
+
+  kustomize:
+    desc: Installs kustomize to {{ .bin.kustomize }}
+    cmds:
+      - mkdir -p {{ squote .localBin }}
+      - GOBIN={{ squote .localBin }} go install sigs.k8s.io/kustomize/kustomize/v5@{{ .versions.kustomize }}
+    status:
+      - "{{ .bin.kustomize }} version"
+
+  setup-envtest:
+    desc: Installs setup-envtest to {{ .bin.setupEnvtest }}
+    cmds:
+      - mkdir -p {{ squote .localBin }}  {{ squote .TASK_TEMP_DIR }}
+      - GOBIN={{ squote .localBin }} go install sigs.k8s.io/controller-runtime/tools/setup-envtest@{{ .versions.setupEnvtest }}
+      - >-
+        {{ .bin.setupEnvtest }} use --bin-dir {{ squote .localBin }} -p path
+        {{ squote .versions.envtest }} 1>{{ print .TASK_TEMP_DIR "/envtest-path" | squote }}
+      - >-
+        xargs realpath --relative-to={{ squote .localBin }} <{{ print .TASK_TEMP_DIR "/envtest-path" | squote }} |
+        xargs printf "%s/kubectl" | xargs -I{} ln -fs {} {{ print .localBin "/kubectl" | squote }}
+    status:
+      - "{{ .bin.kubectl }} version --client"
+      - "{{ .bin.setupEnvtest }} --version"
+
+  lint:
+    desc: Installs golangci-lint to {{ .bin.lint }}
+    cmds:
+      - mkdir -p {{ squote .localBin }}
+      - GOBIN={{ squote .localBin }} go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@{{ .versions.lint }}
+    status:
+      - "{{ .bin.lint }} --version"
+
+  clean:
+    desc: Remove CLI tools from {{ .localBin }}
+    cmds:
+      - cmd: chmod 0755 -Rv {{ squote .localBin }}
+        silent: true
+      - rm -rvf {{ squote .localBin }}
+    status:
+      - test ! -d {{ squote .localBin }}

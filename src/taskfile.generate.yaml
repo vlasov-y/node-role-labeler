@@ -1,0 +1,48 @@
+version: "3"
+
+set: [pipefail]
+
+includes:
+  tools:
+    taskfile: taskfile.tools.yaml
+    internal: true
+
+tasks:
+  all:
+    desc: Aggregator for manifests, code, fmt and vet
+    deps: [fmt, vet]
+    cmds:
+      - task: manifests
+      - task: code
+
+  manifests:
+    desc: Generate WebhookConfiguration, ClusterRole and CustomResourceDefinitions
+    deps: [tools:controller-gen]
+    cmds:
+      - '{{ .bin.controllerGen }} rbac:roleName=app crd webhook paths="./..." output:crd:artifacts:config={{ .manifestPath.crds }} output:rbac:dir={{ .manifestPath.rbac }}'
+
+  code:
+    desc: Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject methods
+    deps: [tools:controller-gen]
+    cmds:
+      - '{{ .bin.controllerGen }} object:headerFile="hack/boilerplate.go.txt" paths="./..."'
+
+  fmt:
+    desc: Run go fmt against the code
+    cmds:
+      - go fmt ./...
+
+  vet:
+    desc: Run go vet against the code
+    cmds:
+      - go vet ./...
+
+  distribute:
+    desc: Created install.yaml with all manifests compiled
+    deps: [tools:kustomize]
+    cmds:
+      - mkdir -p {{ squote .distPath }}
+      - |-
+        cd {{ squote .manifestPath.distribute }}
+        {{ .bin.kustomize }} edit set image {{ print "controller=" .image | squote }}
+      - '{{ .bin.kustomize }} build {{ squote .manifestPath.distribute }} >{{ print .distPath "/install.yaml" | squote }}'

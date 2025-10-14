@@ -1,0 +1,35 @@
+name: Lint
+
+on:
+  push:
+    paths:
+      - src/**/*
+      - .github/workflows/lint.yaml
+  pull_request:
+
+jobs:
+  lint:
+    name: Run on Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone the code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: src/go.mod
+          cache-dependency-path: src/go.sum
+
+      - name: Run linter
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+          working-directory: src
+
+      - name: Install Task
+        uses: go-task/setup-task@v1
+
+      - name: Lint
+        run: task lint-license
+        working-directory: src

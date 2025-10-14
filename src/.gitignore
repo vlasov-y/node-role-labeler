@@ -25,3 +25,8 @@ go.work
 *.swp
 *.swo
 *~
+
+# taskfile local cache
+.task
+# distribution manifest
+dist

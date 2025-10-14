@@ -1,25 +1,61 @@
 #  ┬─┐┬─┐┬─┐  ┌─┐┌─┐┌┌┐┌┌┐o┌┐┐
-#  │─┘│┬┘├─ ──│  │ ││││││││ │ 
-#  ┘  ┘└┘┴─┘  └─┘┘─┘┘ ┘┘ ┘┘ ┘ 
+#  │─┘│┬┘├─ ──│  │ ││││││││ │
+#  ┘  ┘└┘┴─┘  └─┘┘─┘┘ ┘┘ ┘┘ ┘
 
 repos:
-- repo: https://github.com/zricethezav/gitleaks
-  rev: v8.28.0
-  hooks:
-  - id: gitleaks
-    args:
-    - --config=gitleaks.toml
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v6.0.0
-  hooks:
-    - id: check-merge-conflict
-    - id: end-of-file-fixer
-- repo: local
-  hooks:
-    - id: regenerate-manifests
-      name: Regenerate manifests
-      entry: make -C src manifests generate fmt vet
-      language: system
-      files: src/.+
-      types: [file]
-      pass_filenames: false
+  - repo: https://github.com/zricethezav/gitleaks
+    rev: v8.28.0
+    hooks:
+      - name: GitLeaks
+        id: gitleaks
+        args:
+          - --config=gitleaks.toml
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - name: No merge conflicts
+        id: check-merge-conflict
+      - name: End of files to have a newline
+        id: end-of-file-fixer
+      - name: Executables have shebang
+        id: check-executables-have-shebangs
+      - name: Symlinks are valid
+        id: check-symlinks
+      - name: No submodules
+        id: forbid-submodules
+      - name: No mixed line ending
+        id: mixed-line-ending
+  - repo: https://github.com/google/addlicense
+    rev: v1.2.0
+    hooks:
+      - name: Add license to sources
+        id: addlicense
+        entry: sh
+        args:
+          - -c
+          - >-
+            find . -type f \( -name "*.go" -or -name "taskfile*" \) -print0 |
+            xargs -0 addlicense -c 'The Node Role Labeler Authors' -l apache -v
+  - repo: local
+    hooks:
+      - id: regenerate-manifests
+        name: Regenerate manifests
+        entry: task -d src generate:all
+        language: system
+        files: src/.+
+        types: [file]
+        pass_filenames: false
+      - id: lint
+        name: Go lint
+        entry: task -d src lint lint-license
+        language: system
+        files: src/.+
+        types: [file]
+        pass_filenames: false
+      - id: unit
+        name: Go unit tests
+        entry: task -d src test:unit
+        language: system
+        files: src/.+
+        types: [file]
+        pass_filenames: false

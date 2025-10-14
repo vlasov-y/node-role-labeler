@@ -4,15 +4,14 @@
 # More info: https://book.kubebuilder.io/reference/project-config.html
 domain: node-role-labeler.io
 layout:
-- go.kubebuilder.io/v4
+  - go.kubebuilder.io/v4
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
 projectName: node-role-labeler
 repo: github.com/vlasov-y/node-role-labeler
 resources:
-- controller: true
-  domain: node-role-labeler.io
-  kind: Node
-  version: v1
+  - controller: true
+    kind: Node
+    version: v1
 version: "3"

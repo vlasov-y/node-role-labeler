@@ -1,0 +1,32 @@
+version: "3"
+
+set: [pipefail]
+
+includes:
+  kind:
+    taskfile: taskfile.kind.yaml
+    internal: true
+
+tasks:
+  build:
+    desc: Build {{ .image }} image
+    cmds:
+      - "{{ .bin.containerTool }} build -t {{ squote .image }} ."
+
+  push:
+    desc: Push {{ .image }} image
+    cmds:
+      - "{{ .bin.containerTool }} push {{ squote .image }}"
+
+  build-and-load:
+    desc: Build {{ .image }} image and load to the KIND cluster
+    deps: [build]
+    cmds:
+      - task: kind:load
+
+  clean:
+    desc: Remove {{ .image }} image
+    cmds:
+      - "{{ .bin.containerTool }} image rm {{ squote .image }}"
+    status:
+      - "{{ .bin.containerTool }} image inspect {{ squote .image }} && exit 1"

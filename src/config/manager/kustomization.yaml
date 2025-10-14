@@ -1,8 +1,19 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: node-role-labeler
+namePrefix: node-role-labeler-
 resources:
-- manager.yaml
+  - deployment.yaml
+  - namespace.yaml
+  - rbac
 images:
-- name: controller
-  newName: ghcr.io/vlasov-y/node-role-labeler
-  newTag: v0.0.1
+  - name: controller
+    newName: ghcr.io/vlasov-y/node-role-labeler
+labels:
+  - includeSelectors: true
+    includeTemplates: true
+    pairs:
+      app.kubernetes.io/instance: node-role-labeler
+      app.kubernetes.io/name: node-role-labeler
+  - pairs:
+      app.kubernetes.io/managed-by: kustomize

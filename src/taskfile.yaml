@@ -1,0 +1,119 @@
+version: "3"
+
+set: [pipefail]
+
+includes:
+  docker: taskfile.docker.yaml
+  generate: taskfile.generate.yaml
+  kind: taskfile.kind.yaml
+  test: taskfile.test.yaml
+  tools: taskfile.tools.yaml
+
+env:
+  GO111MODULE: on
+  TASK_TEMP_DIR: '{{ .TASK_TEMP_DIR | default (print .ROOT_DIR "/.task")  }}'
+  GOBIN:
+    sh: |-
+      if [ -n "$(go env GOBIN)" ]; then
+        go env GOBIN
+      else
+        echo "$(go env GOPATH)/bin"
+      fi
+
+vars:
+  name: node-role-labeler
+  image: ghcr.io/vlasov-y/node-role-labeler
+  localBin: "{{ .ROOT_DIR }}/bin"
+  kubeconfig: '{{ print .ROOT_DIR "/kubeconfig.yaml" }}'
+  distPath: "{{ .ROOT_DIR }}/dist"
+  manifestPath:
+    map:
+      root: "{{ .ROOT_DIR }}/config/kind"
+      crds: "{{ .ROOT_DIR }}/config/crds"
+      rbac: "{{ .ROOT_DIR }}/config/manager/rbac"
+      distribute: "{{ .ROOT_DIR }}/config/manager"
+  bin:
+    map:
+      containerTool: docker
+      controllerGen: '{{ print .localBin "/controller-gen" | squote }}'
+      kind: '{{ print .localBin "/kind" | squote }}'
+      kubectl: '{{ print .localBin "/kubectl" | squote }} --kubeconfig {{ squote .kubeconfig }}'
+      kustomize: '{{ print .localBin "/kustomize" | squote }}'
+      lint: '{{ print .localBin "/golangci-lint" | squote }}'
+      setupEnvtest: '{{ print .localBin "/setup-envtest" | squote }}'
+  kind:
+    map:
+      name: "{{ .name }}"
+      configPath: '{{ print .TASK_TEMP_DIR "/kind-config.yaml" }}'
+      config: |-
+        apiVersion: kind.x-k8s.io/v1alpha4
+        kind: Cluster
+        nodes:
+        - role: control-plane
+          labels:
+            node-role.cluster.local/control-plane: ""
+        - role: worker
+          labels:
+            node-role.cluster.local/worker: ""
+
+tasks:
+  clean:
+    desc: Remove all build artifacts
+    cmds:
+      - task: kind:clean
+      - task: test:clean
+      - task: tools:clean
+      - rm -rvf {{ squote .TASK_TEMP_DIR }} {{ squote .distPath }}
+
+  install-crds:
+    desc: Install operator CRDs
+    deps: [generate:all, kind:bootstrap]
+    cmds:
+      - "{{ .bin.kubectl }} apply --wait -k {{ squote .manifestPath.crds }}"
+    status:
+      - test ! -d {{ squote .manifestPath.crds }}
+
+  install-operator:
+    desc: Install operator
+    deps: [install-crds]
+    cmds:
+      - task: docker:build-and-load
+      - "{{ .bin.kubectl }} apply --wait -k {{ squote .manifestPath.root }}"
+      - "{{ .bin.kubectl }} -n {{ squote .name }} wait --for=condition=Available deployments --all --timeout=5m"
+      - "{{ .bin.kubectl }} -n {{ squote .name }} wait --for=condition=Ready pods --all --timeout=5m"
+
+  uninstall-crds:
+    desc: Uninstall operator CRDs
+    cmds:
+      - "{{ .bin.kubectl }} delete --wait -k {{ squote .manifestPath.crds }}"
+    status:
+      - test ! -d {{ squote .manifestPath.crds }}
+
+  uninstall-operator:
+    desc: Uninstall operator
+    deps: [uninstall-crds]
+    cmds:
+      - "{{ .bin.kubectl }} delete --wait -k {{ squote .manifestPath.root }}"
+
+  lint:
+    desc: Go linter
+    deps: [tools:lint]
+    cmds:
+      - '{{ .bin.lint }} config verify --config {{ print .ROOT_DIR "/.golangci.yml" | quote }}'
+      - "{{ .bin.lint }} run"
+
+  lint-license:
+    desc: Verify sources have license comment header
+    cmds:
+      - silent: true
+        cmd: |-
+          error=false
+          find . -type f \( -name "*.go" -or -name "taskfile*" \) |
+          while IFS= read -r file; do
+            if ! head -1 "$file" | grep -qF 'Copyright 2025 The Node Role Labeler Authors' - || \
+               ! head -7 "$file" | tail -1 | grep -qF 'http://www.apache.org/licenses/LICENSE-2.0' -; then
+              echo "error: failed to validate the license header for $file" 1>&2
+              error=true
+            fi
+          done
+          if [ "$error" = "true" ]; then exit 1; fi

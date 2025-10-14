@@ -1,0 +1,56 @@
+version: "3"
+
+set: [pipefail]
+
+includes:
+  tools:
+    taskfile: taskfile.tools.yaml
+    internal: true
+
+tasks:
+  create:
+    desc: Create a KIND cluster
+    deps: [tools:kind, tools:setup-envtest]
+    cmds:
+      - silent: true
+        cmd: |-
+          mkdir -p "$(dirname {{ .kind.configPath }})"
+          echo {{ b64enc .kind.config }} | base64 -d >{{ .kind.configPath }}
+      - >-
+        KUBECONFIG={{ squote .kubeconfig }} {{ .bin.kind }} create cluster
+        --name {{ .kind.name }} --config {{ .kind.configPath }}
+      - chmod 0600 {{ squote .kubeconfig }}
+      - task: kubeconfig
+      - "{{ .bin.kubectl }} wait -n kube-system --for=condition=Available deployments --all --timeout=5m"
+    status:
+      - "{{ .bin.kind }} get clusters | grep -qF {{ .kind.name }}"
+
+  bootstrap:
+    desc: Bootstrap the cluster
+    deps: [create] # setup-envtest to get .bin.kubectl
+
+  kubeconfig:
+    desc: Export kubeconfig to {{ .kubeconfig }}
+    deps: [create]
+    cmds:
+      - "{{ .bin.kind }} export kubeconfig --name {{ .kind.name }} --kubeconfig {{ squote .kubeconfig }}"
+      - "{{ .bin.kubectl }} config set-context --current --namespace={{ squote .name }}"
+
+  load:
+    desc: Load image into cluster
+    deps: [create]
+    cmds:
+      - "{{ .bin.kind }} load docker-image {{ .image }} --name {{ .kind.name }}"
+
+  clean:
+    desc: Delete the KIND cluster
+    cmds:
+      - cmd: "{{ .bin.kind }} delete cluster --name {{ .kind.name }} 2>/dev/null"
+        ignore_error: true
+      - rm -f {{ .kubeconfig }}
+    status:
+      - |-
+        if [ -f {{ .bin.kind }} ]; then
+          {{ .bin.kind }} get clusters | grep -qF {{ .kind.name }} && exit 1
+        fi
+      - test ! -f {{ .kubeconfig }}
